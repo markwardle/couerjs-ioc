@@ -5,9 +5,14 @@
     let _values = {};
     let _intact = {};
     let _shared = {};
+    let _setters = [];
     let _config = {
         basePath: './'
     };
+
+    function lcFirst(str) {
+        return str[0].toLowerCase() + str.slice(1);
+    }
 
     class Container {
         constructor(config) {
@@ -40,22 +45,39 @@
             return _values[key];
         }
 
-        invoke(func, args = {}) {
+        resolveArguments(func, args) {
+            return argsList(func).map(
+                    argName => typeof args[argName] !== 'undefined' ? args[argName] : this.get(argName)
+            );
+        }
+
+        invoke(func, args = {}, thisArg = null) {
             /* Make sure we are dealing with a function */
             if (typeof func !== 'function') {
                 return func;
             }
 
             /* Create a this argument in case the function is a constructor */
-            let thisArg = Object.create(func.prototype);
+            thisArg = thisArg || Object.create(func.prototype);
 
             /* Determine what arguments will be applied to the function */
-            let resolved = argsList(func).map(
-                argName => typeof args[argName] !== 'undefined' ? args[argName] : this.get(argName)
-            );
+            let resolved = this.resolveArguments(func, args);
 
             /* If the invocation returns a value, use that, otherwise return the this argument */
-            return func.apply(thisArg, resolved) || thisArg;
+            let result = func.apply(thisArg, resolved) || thisArg;
+
+            /* Apply setters */
+            if (typeof result === 'object') {
+                _setters.forEach(setter => {
+                    if (typeof result[setter] === 'function') {
+                        result[setter].apply(result, this.resolveArguments(result[setter], args));
+                    }
+
+                    // TODO: should setters work on properties?
+                })
+            }
+
+            return result;
         }
 
         add(key, definition, shared = false, intact = false) {
@@ -72,11 +94,17 @@
 
             /* A relative path */
             let lastSlash = key.lastIndexOf('/');
-            key = definition.substr(lastSlash + 1);
+            key = key.substr(lastSlash + 1);
 
             /* If the key has a js file extension, get rid of it */
             if (key.indexOf('.js', key.length - 3) !== -1) {
-                key = definition.substr(0, key.length - 3);
+                key = key.substr(0, key.length - 3);
+            }
+
+            key = lcFirst(key);
+
+            if(typeof _values[key] !== 'undefined'){
+                // TODO: error
             }
 
             _shared[key] = !!shared;
@@ -88,10 +116,12 @@
                 if (definition[0] === '.') {
                     definition = path.resolve(_config.basePath, definition);
                 }
-                definition = (def => () => this.invoke(require(def)).call(null, definition));
+                definition = (def => () => this.invoke(require(def))).call(null, definition);
             }
 
             _values[key] = definition;
+
+            return this;
         }
 
         share(key, definition) {
@@ -102,12 +132,21 @@
             return this.add(key, definition, false, true);
         }
 
+        setter(setterName) {
+            _setters.push(setterName);
+            return this;
+        }
+
+        alias(key, aliasedKey) {
+            this.share(key, () => this.get(aliasedKey));
+        }
+
     }
 
-    if (this.exports != null) {
-        this.exports = Container;
+    if (module != null) {
+        module.exports = Container;
     } else {
         this.Container = Container;
     }
 
-}).call(module || this);
+}).call(null);

@@ -6,9 +6,11 @@
   "dependencies": {
     "args-list": "^0.3.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^2.2.5"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test"
   },
   "author": "Mark Wardle",
   "license": "MIT"
