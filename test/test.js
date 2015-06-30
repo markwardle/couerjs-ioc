@@ -1,5 +1,5 @@
 var assert = require('assert');
-var Container = require('../src/container-compiled.js');
+var Container = require('../container.js');
 
 function FakeConsole() {
     this.logs = [];
@@ -22,7 +22,7 @@ describe('Container', function(){
                 return message;
             };
 
-            container.add("console", fakeConsole);
+            container.register("console", fakeConsole);
 
             var result = container.invoke(testFunc1, {message: "test1"});
 
@@ -37,9 +37,9 @@ describe('Container', function(){
             var fakeConsole = new FakeConsole();
             var container = new Container({basePath: __dirname});
 
-            container.add("console", fakeConsole);
-            container.add("./mock/TestObject");
-            container.add("./mock/TestDependency");
+            container.register("console", fakeConsole);
+            container.register("./mock/TestObject");
+            container.register("./mock/TestDependency");
 
             var obj = container.get("testObject");
 
@@ -62,7 +62,7 @@ describe('Container', function(){
                 console.log(message);
             };
 
-            container.add("console", fakeConsole);
+            container.register("console", fakeConsole);
             container.intact("testFunc", testFunc1);
 
             var result = container.get("testFunc", {message: "test1"});
@@ -84,15 +84,15 @@ describe('Container', function(){
         });
     });
 
-    describe("#share", function(){
+    describe("#service", function(){
          it('should always return the same object', function(){
              var fakeConsole = new FakeConsole();
              var container = new Container({basePath: __dirname});
 
-             container.add("console", fakeConsole);
-             container.add('notShared', "./mock/TestObject");
-             container.share('shared', "./mock/TestObject");
-             container.add("./mock/TestDependency");
+             container.register("console", fakeConsole);
+             container.register('notShared', "./mock/TestObject");
+             container.service('shared', "./mock/TestObject");
+             container.register("./mock/TestDependency");
 
              var notShared1 = container.get("notShared");
              var notShared2 = container.get("notShared");
@@ -112,7 +112,7 @@ describe('Container', function(){
             var fakeConsole = new FakeConsole();
             var container = new Container({basePath: __dirname});
 
-            container.add("console", fakeConsole);
+            container.register("console", fakeConsole);
             container.alias("out", "console");
 
             var result = container.get("out");
@@ -125,9 +125,9 @@ describe('Container', function(){
             var fakeConsole = new FakeConsole();
             var container = new Container({basePath: __dirname});
 
-            container.add("console", fakeConsole);
-            container.add("./mock/TestObject");
-            container.add("./mock/TestDependency");
+            container.register("console", fakeConsole);
+            container.register("./mock/TestObject");
+            container.register("./mock/TestDependency");
             container.intact("test", "success");
 
             container.setter("testSetter");

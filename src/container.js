@@ -51,14 +51,14 @@
             );
         }
 
-        invoke(func, args = {}, thisArg = null) {
+        invoke(func, args = {}) {
             /* Make sure we are dealing with a function */
             if (typeof func !== 'function') {
                 return func;
             }
 
             /* Create a this argument in case the function is a constructor */
-            thisArg = thisArg || Object.create(func.prototype);
+            let thisArg = Object.create(func.prototype);
 
             /* Determine what arguments will be applied to the function */
             let resolved = this.resolveArguments(func, args);
@@ -80,7 +80,7 @@
             return result;
         }
 
-        add(key, definition, shared = false, intact = false) {
+        register(key, definition, shared = false, intact = false) {
 
             /* The key has to be a string */
             if (typeof key !== 'string') {
@@ -124,12 +124,12 @@
             return this;
         }
 
-        share(key, definition) {
-            return this.add(key, definition, true);
+        service(key, definition) {
+            return this.register(key, definition, true);
         }
 
         intact(key, definition) {
-            return this.add(key, definition, false, true);
+            return this.register(key, definition, false, true);
         }
 
         setter(setterName) {
@@ -138,7 +138,7 @@
         }
 
         alias(key, aliasedKey) {
-            this.share(key, () => this.get(aliasedKey));
+            this.service(key, () => this.get(aliasedKey));
         }
 
     }
