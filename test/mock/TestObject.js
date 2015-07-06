@@ -1,10 +1,10 @@
 (function(){
-    function TestObject(console, testDependency) {
+    var TestObject = function TestObject(console, testDependency) {
         this.dependency = testDependency;
-        this.test = false;
+        this.test = null;
 
         console.log("test object");
-    }
+    };
 
     TestObject.prototype.testSetter = function(test) {
         this.test = test;
